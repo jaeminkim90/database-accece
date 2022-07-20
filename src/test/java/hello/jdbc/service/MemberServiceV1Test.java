@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.sql.SQLException;
 
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -33,6 +34,14 @@ class MemberServiceV1Test {
         DriverManagerDataSource dataSource = new DriverManagerDataSource(URL, USERNAME, PASSWORD);
         memberRepository = new MemberRepositoryV1(dataSource);
         memberServiceV1 = new MemberServiceV1(memberRepository);
+    }
+
+    @AfterEach
+    void after () throws SQLException {
+        memberRepository.delete(MEMBER_A);
+        memberRepository.delete(MEMBER_B);
+        memberRepository.delete(MEMBER_EX);
+
     }
 
     @Test
