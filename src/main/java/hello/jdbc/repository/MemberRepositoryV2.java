@@ -15,7 +15,7 @@ import hello.jdbc.domain.Member;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * JDBC - Connection을 파라미터로 사용
+ * JDBC - Connection을 파라미터로 받아서 사용한다
  */
 @Slf4j
 public class MemberRepositoryV2 {
