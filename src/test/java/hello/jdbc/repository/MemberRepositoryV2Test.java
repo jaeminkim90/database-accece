@@ -17,7 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 class MemberRepositoryV2Test {
 
-    MemberRepositoryV1 repository;
+    MemberRepositoryV2 repository;
 
     @BeforeEach // 각각의 테스트 메서드 호출 전에 실행된다
     void beforeEach() {
@@ -30,7 +30,7 @@ class MemberRepositoryV2Test {
         dataSource.setUsername(USERNAME);
         dataSource.setPassword(PASSWORD);
 
-        repository = new MemberRepositoryV1(dataSource);
+        repository = new MemberRepositoryV2(dataSource);
 
     }
 

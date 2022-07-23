@@ -15,7 +15,7 @@ import hello.jdbc.domain.Member;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * JDBC - Connection을 파라미터로 받아서 사용한다
+ * JDBC - DataSource 사용, jdbcUtils 사용
  */
 @Slf4j
 public class MemberRepositoryV2 {
@@ -79,6 +79,42 @@ public class MemberRepositoryV2 {
         }
     }
 
+    public Member findById(Connection con, String memberId) throws SQLException {
+        // Connection을 받아서 사용해야 한다
+
+        String sql = "select * from member where member_id = ?";
+
+
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+
+        try {
+            // con = getConnection(); // 트랜잭션을 사용할 때는 새로운 커넥션을 만들어 사용하면 안된다.
+            pstmt = con.prepareStatement(sql);
+            pstmt.setString(1, memberId);
+
+            rs = pstmt.executeQuery();
+            if (rs.next()) { // 한 번은 호출을 해줘야 커서가 실제 데이터가 있는 쪽으로 넘어간다
+                Member member = new Member();
+                member.setMemberId(rs.getString("member_id"));
+                member.setMoney(rs.getInt("money"));
+                return member;
+            } else {
+                throw new NoSuchElementException("member not found memberId=" + memberId); // memberId를 예외 메시지에 넣지 않으면 어떤 memberId가 문제인지 알 수 없다
+            }
+        } catch (SQLException e) {
+            log.error("db error", e);
+            throw e;
+        } finally {
+            // Connection은 여기서 닫지 않는다
+            JdbcUtils.closeResultSet(rs);
+            JdbcUtils.closeStatement(pstmt);
+            //JdbcUtils.closeConnection(con); // 파라미터로 받은 connection을 닫으면 안된다
+        }
+    }
+
+
+
     public void update(String memberId, int money) throws SQLException {
         String sql = "update member set money =? where member_id=?";
 
@@ -99,6 +135,27 @@ public class MemberRepositoryV2 {
             close(con, pstmt, null); // 항상 호출을 보장해야 한다
         }
     }
+
+    public void update(Connection con, String memberId, int money) throws SQLException {
+        String sql = "update member set money =? where member_id=?";
+
+        PreparedStatement pstmt = null;
+
+        try {
+            pstmt = con.prepareStatement(sql);
+            pstmt.setInt(1, money);
+            pstmt.setString(2, memberId);
+            int resultSize = pstmt.executeUpdate();
+            log.info("resultSize={}", resultSize);
+        } catch (SQLException e) {
+            log.error("db error", e);
+            throw e;
+        } finally {
+            // Connection은 여기서 닫지 않는다
+            JdbcUtils.closeStatement(pstmt);
+        }
+    }
+
 
     public void delete(String memberId) throws SQLException {
         String sql = "delete from member where member_id =?";

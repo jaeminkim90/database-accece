@@ -6,7 +6,7 @@ import java.sql.SQLException;
 import javax.sql.DataSource;
 
 import hello.jdbc.domain.Member;
-import hello.jdbc.repository.MemberRepositoryV1;
+import hello.jdbc.repository.MemberRepositoryV2;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -18,7 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 public class MemberServiceV2 {
 
     private final DataSource dataSource;
-    private final MemberRepositoryV1 memberRepositoryV1;
+    private final MemberRepositoryV2 memberRepositoryV2;
 
     public void accountTransfer(String fromId, String toId, int money) throws SQLException {
         Connection con = dataSource.getConnection(); // Connection을 받아온다
@@ -51,13 +51,13 @@ public class MemberServiceV2 {
     private void bizLogic(Connection con, String fromId, String toId, int money) throws SQLException {
         // 비즈니스 로직
         //
-        Member fromMember = memberRepositoryV1.findById(con, fromId); // 보내는 멤버
-        Member toMember = memberRepositoryV1.findById(con,toId);
+        Member fromMember = memberRepositoryV2.findById(con, fromId); // 보내는 멤버
+        Member toMember = memberRepositoryV2.findById(con,toId);
 
-        memberRepositoryV1.update(con, fromId, fromMember.getMoney() - money); // fromMember의 money 출금 처리
+        memberRepositoryV2.update(con, fromId, fromMember.getMoney() - money); // fromMember의 money 출금 처리
         // 예외 발생 상황 만들기
         validation(toMember);
-        memberRepositoryV1.update(con, toId, toMember.getMoney() + money); // fromMember의 money 출금 처리
+        memberRepositoryV2.update(con, toId, toMember.getMoney() + money); // fromMember의 money 출금 처리
     }
 
     private void release(Connection con) {

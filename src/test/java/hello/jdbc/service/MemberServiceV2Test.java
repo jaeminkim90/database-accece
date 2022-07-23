@@ -1,6 +1,7 @@
 package hello.jdbc.service;
 
 import static hello.jdbc.connection.ConnectionConst.*;
+import static jdk.nashorn.internal.runtime.regexp.joni.Config.*;
 import static org.assertj.core.api.Assertions.*;
 
 import java.sql.SQLException;
@@ -13,24 +14,28 @@ import org.springframework.jdbc.datasource.DriverManagerDataSource;
 
 import hello.jdbc.domain.Member;
 import hello.jdbc.repository.MemberRepositoryV2;
+import lombok.extern.slf4j.Slf4j;
 
 /**
- * 기본 동작, 트랜잭션이 없어서 문제 발생하는 상황을 테스트한다.
+ * 트랜잭션 - 커넥션 파라미터 전달 방식 동기화
  */
-class MemberServiceV1Test {
+@Slf4j
+class MemberServiceV2Test {
 
     public static final String MEMBER_A = "memberA";
     public static final String MEMBER_B = "memberB";
     public static final String MEMBER_EX = "ex";
 
     private MemberRepositoryV2 memberRepository;
-    private MemberServiceV1 memberServiceV1;
+    private MemberServiceV2 memberServiceV2;
 
     @BeforeEach
     void before() {
+        // DriverManager 대신 Hikari를 사용해도 무방하다
         DriverManagerDataSource dataSource = new DriverManagerDataSource(URL, USERNAME, PASSWORD);
+
         memberRepository = new MemberRepositoryV2(dataSource);
-        memberServiceV1 = new MemberServiceV1(memberRepository);
+        memberServiceV2 = new MemberServiceV2(dataSource, memberRepository);
     }
 
     @AfterEach
@@ -52,7 +57,9 @@ class MemberServiceV1Test {
         memberRepository.save(memberB);
 
         // when
-        memberServiceV1.accountTransfer(memberA.getMemberId(), memberB.getMemberId(), 2000);
+        log.info("START FX");
+        memberServiceV2.accountTransfer(memberA.getMemberId(), memberB.getMemberId(), 2000);
+        log.info("END FX");
 
         // then
         Member findMemberA = memberRepository.findById(memberA.getMemberId());
@@ -72,14 +79,14 @@ class MemberServiceV1Test {
         memberRepository.save(memberEx);
 
         // when - 예외가 발생하는 상황응 검증한다
-        assertThatThrownBy(() -> memberServiceV1.accountTransfer(memberA.getMemberId(), memberEx.getMemberId(), 2000))
+        assertThatThrownBy(() -> memberServiceV2.accountTransfer(memberA.getMemberId(), memberEx.getMemberId(), 2000))
             .isInstanceOf(IllegalStateException.class);
-        //memberServiceV1.accountTransfer(memberA.getMemberId(), memberEx.getMemberId(), 2000);
+        // 수동 커밋 모드로 동작하기 때문에 예외가 발생하면 rollback 처리한다
 
         // then
         Member findMemberA = memberRepository.findById(memberA.getMemberId());
         Member findMemberB = memberRepository.findById(memberEx.getMemberId());
-        assertThat(findMemberA.getMoney()).isEqualTo(8000);
+        assertThat(findMemberA.getMoney()).isEqualTo(10000);
         assertThat(findMemberB.getMoney()).isEqualTo(10000);
     }
 
