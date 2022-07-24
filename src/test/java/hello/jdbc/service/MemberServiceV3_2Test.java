@@ -1,0 +1,99 @@
+package hello.jdbc.service;
+
+import static hello.jdbc.connection.ConnectionConst.*;
+import static org.assertj.core.api.Assertions.*;
+
+import java.sql.SQLException;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
+import org.springframework.transaction.PlatformTransactionManager;
+
+import hello.jdbc.domain.Member;
+import hello.jdbc.repository.MemberRepositoryV3;
+import lombok.extern.slf4j.Slf4j;
+
+/**
+ * 트랜잭션 - 트랜잭션 템플릿
+ */
+@Slf4j
+class MemberServiceV3_2Test {
+
+    public static final String MEMBER_A = "memberA";
+    public static final String MEMBER_B = "memberB";
+    public static final String MEMBER_EX = "ex";
+
+    private MemberRepositoryV3 memberRepository;
+    private MemberServiceV3_2 memberService;
+
+    @BeforeEach
+    void before() {
+        // DriverManager 대신 Hikari를 사용해도 무방하다
+        DriverManagerDataSource dataSource = new DriverManagerDataSource(URL, USERNAME, PASSWORD); // 데이터 소스 셋팅
+
+        memberRepository = new MemberRepositoryV3(dataSource); // 리포지토리 주입
+
+        // 트랜잭션 매니저 객체 생성
+        // 트랜잭션매니저를 만들 때 파라미터로 dataSource를 넘긴다. 트랜잭션매니저가 dataSource를 이용해 커넥션을 생성한다. dataSource가 없으면 커넥션을 만들 수 없다
+        PlatformTransactionManager transactionManager = new DataSourceTransactionManager(dataSource);
+        memberService = new MemberServiceV3_2(transactionManager, memberRepository); // 트랜잭션 매니저를 파라미터에 담아 서비스 호출
+
+    }
+
+    @AfterEach
+    void after () throws SQLException {
+        memberRepository.delete(MEMBER_A);
+        memberRepository.delete(MEMBER_B);
+        memberRepository.delete(MEMBER_EX);
+
+    }
+
+    @Test
+    @DisplayName("정상 이체")
+    void accountTransfer() throws SQLException {
+
+        // given
+        Member memberA = new Member(MEMBER_A, 10000);
+        Member memberB = new Member(MEMBER_B, 10000);
+        memberRepository.save(memberA);
+        memberRepository.save(memberB);
+
+        // when
+        log.info("START FX");
+        memberService.accountTransfer(memberA.getMemberId(), memberB.getMemberId(), 2000);
+        log.info("END FX");
+
+        // then
+        Member findMemberA = memberRepository.findById(memberA.getMemberId());
+        Member findMemberB = memberRepository.findById(memberB.getMemberId());
+        assertThat(findMemberA.getMoney()).isEqualTo(8000);
+        assertThat(findMemberB.getMoney()).isEqualTo(12000);
+    }
+
+    @Test
+    @DisplayName("이체 중 예외 발생")
+    void accountTransferEx() throws SQLException {
+
+        // given
+        Member memberA = new Member(MEMBER_A, 10000);
+        Member memberEx = new Member(MEMBER_EX, 10000);
+        memberRepository.save(memberA);
+        memberRepository.save(memberEx);
+
+        // when - 예외가 발생하는 상황응 검증한다
+        assertThatThrownBy(() -> memberService.accountTransfer(memberA.getMemberId(), memberEx.getMemberId(), 2000))
+            .isInstanceOf(IllegalStateException.class);
+        // 수동 커밋 모드로 동작하기 때문에 예외가 발생하면 rollback 처리한다
+
+        // then
+        Member findMemberA = memberRepository.findById(memberA.getMemberId());
+        Member findMemberB = memberRepository.findById(memberEx.getMemberId());
+        assertThat(findMemberA.getMoney()).isEqualTo(10000);
+        assertThat(findMemberB.getMoney()).isEqualTo(10000);
+    }
+
+}
