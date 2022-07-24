@@ -7,16 +7,19 @@ import java.sql.SQLException;
 
 import javax.sql.DataSource;
 
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
+import org.springframework.test.util.AopTestUtils;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import hello.jdbc.domain.Member;
@@ -27,7 +30,7 @@ import lombok.extern.slf4j.Slf4j;
  * 트랜잭션 - @Transactional AOP
  */
 @Slf4j
-@SpringBootTest // 테스트를 실행할 때 스프링을 띄우고 의존관계를 등록하게 된다. 필드는 @Autowired로 의존관계 주입을 받아야 한다.
+@SpringBootTest // 테스트를 실행할 때 스프링 컨테이너를 띄우고 의존관계를 등록하게 된다. 필드는 @Autowired로 의존관계 주입을 받아야 한다.
 class MemberServiceV3_3Test {
 
     public static final String MEMBER_A = "memberA";
@@ -41,7 +44,7 @@ class MemberServiceV3_3Test {
     private MemberServiceV3_3 memberService;
 
 
-    @TestConfiguration
+    @TestConfiguration // 테스트 안에서 사용하면, 스프링 부트가 자동으로 만들어주는 빈들에 추가로 필요한 스프링 빈들을 등록하고 테스트를 수행할 수 있다.
     static class TestConfig {
 
         @Bean // 스프링 생태계 안에서 dataSource를 주입받아서 쓸 수 있게 된다
@@ -83,7 +86,13 @@ class MemberServiceV3_3Test {
         memberRepository.delete(MEMBER_A);
         memberRepository.delete(MEMBER_B);
         memberRepository.delete(MEMBER_EX);
+    }
 
+    @Test
+   void AopCheck() {
+        log.info("memberService class = {}", memberService.getClass());
+        log.info("membmerRepository class = {}", memberRepository.getClass());
+        assertThat(AopUtils.isAopProxy(memberService)); // AopProxy여부를 확인할 수 있다
     }
 
     @Test
