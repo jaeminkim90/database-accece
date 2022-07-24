@@ -131,13 +131,16 @@ public class MemberRepositoryV3 {
         // 각각의 메서드마다 예외 처리가 되어있다.
         JdbcUtils.closeResultSet(rs);
         JdbcUtils.closeStatement(stmt);
+
         // 주의! 트랜잭션 동기회를 사용하려면 DataSourceUtils를 사용해야 한다.
+        // DataSourceUtils를 사용해 release 하면, <트랜잭션 동기화 매니저>에서 가져온 커넥션은 close하지 않고 반환한다
         DataSourceUtils.releaseConnection(con, dataSource);
-        //JdbcUtils.closeConnection(con);
+
     }
 
     private Connection getConnection() throws SQLException {
         // 주의! 트랜잭션 동기화를 사용하려면 DataSourceUtils를 사용해야 한다
+        // repository에서 커넥션이 필요할 때 DataSourceUtils을 이용하면 <트랜잭션 동기화 매니저>에서 커넥션을 가져다 쓰게 된다.
         Connection con = DataSourceUtils.getConnection(dataSource);
 
         log.info("get connection = {}, class = {}", con, con.getClass());
