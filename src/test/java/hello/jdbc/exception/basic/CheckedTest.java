@@ -60,7 +60,7 @@ public class CheckedTest {
          * 체크 예외는 예외를 잡지 않고 밖으로 던지려면 throws 예외를 메서드에 필수로 선언해야 한다.
          * @throws MyCheckedException
          */
-        public void callThrow() throws MyCheckedException {
+        public void callThrow() throws Exception {
             repository.call();
         }
 
