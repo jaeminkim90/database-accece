@@ -59,7 +59,7 @@ public class UnCheckedAppTest {
             try {
                 runSQL();
             } catch (SQLException e) {
-                throw new RuntimeSQLException(); // check 예외 발생 시, uncheck 예외인 RuntimeException으로 변환해서 처리
+                throw new RuntimeSQLException(e); // check 예외 발생 시, uncheck 예외인 RuntimeException으로 변환해서 처리
             }
         }
 
