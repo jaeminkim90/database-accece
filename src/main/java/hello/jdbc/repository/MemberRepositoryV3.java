@@ -21,7 +21,7 @@ import lombok.extern.slf4j.Slf4j;
  * Connection을 닫을 때: DataSourceUtils.releaseConnection() 사용
  */
 @Slf4j
-public class MemberRepositoryV3 {
+public class MemberRepositoryV3 implements MemberRepositoryEx {
 
     private final DataSource dataSource;
 
