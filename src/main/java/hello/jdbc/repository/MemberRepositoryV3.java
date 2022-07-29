@@ -53,7 +53,7 @@ public class MemberRepositoryV3 implements MemberRepositoryEx {
 
     }
 
-    public Member findById(String memberId) throws SQLException {
+    public Member findById(String memberId) throws Exception {
         String sql = "select * from member where member_id = ?";
 
         Connection con = null;
@@ -103,7 +103,7 @@ public class MemberRepositoryV3 implements MemberRepositoryEx {
         }
     }
 
-    public void delete(String memberId) throws SQLException {
+    public void delete(String memberId) throws Exception {
         String sql = "delete from member where member_id =?";
         log.info("delete");
 
