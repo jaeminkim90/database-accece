@@ -13,6 +13,7 @@ import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.jdbc.support.JdbcUtils;
 
 import hello.jdbc.domain.Member;
+import hello.jdbc.repository.ex.MyDbException;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -21,15 +22,16 @@ import lombok.extern.slf4j.Slf4j;
  * Connection을 닫을 때: DataSourceUtils.releaseConnection() 사용
  */
 @Slf4j
-public class MemberRepositoryV3 {
+public class MemberRepositoryV4_1 implements MemberRepository{
 
     private final DataSource dataSource;
 
-    public MemberRepositoryV3(DataSource dataSource) {
+    public MemberRepositoryV4_1(DataSource dataSource) {
         this.dataSource = dataSource;
     }
 
-    public Member save(Member member) throws SQLException {
+    @Override // 인터페이스 사용 시 overide를 넣는 것이 좋다
+    public Member save(Member member) { // throws SQLException 는 생략해도 된다(unchecked 예외 사용)
 
         String sql = "insert into member(member_id, money) values (?,?)"; // 쿼리
 
@@ -45,15 +47,15 @@ public class MemberRepositoryV3 {
             return member;
 
         } catch (SQLException e) {
-            log.error("db error", e);
-            throw e;
+            throw new MyDbException(e); // 예외를 갈아탈 때는 반드시 기존 예외를 넣어줘야 한다
         } finally {
             close(con, pstmt, null); // 항상 호출을 보장해야 한다
         }
 
     }
 
-    public Member findById(String memberId) throws SQLException {
+    @Override
+    public Member findById(String memberId) {
         String sql = "select * from member where member_id = ?";
 
         Connection con = null;
@@ -75,14 +77,14 @@ public class MemberRepositoryV3 {
                 throw new NoSuchElementException("member not found memberId=" + memberId); // memberId를 예외 메시지에 넣지 않으면 어떤 memberId가 문제인지 알 수 없다
             }
         } catch (SQLException e) {
-            log.error("db error", e);
-            throw e;
+            throw new MyDbException(e); // 예외를 갈아탈 때는 반드시 기존 예외를 넣어줘야 한다
         } finally {
             close(con, pstmt, rs); // close 처리는 중요하다
         }
     }
 
-    public void update(String memberId, int money) throws SQLException {
+    @Override
+    public void update(String memberId, int money) {
         String sql = "update member set money =? where member_id=?";
 
         Connection con = null;
@@ -96,14 +98,14 @@ public class MemberRepositoryV3 {
             int resultSize = pstmt.executeUpdate();
             log.info("resultSize={}", resultSize);
         } catch (SQLException e) {
-            log.error("db error", e);
-            throw e;
+            throw new MyDbException(e); // 예외를 갈아탈 때는 반드시 기존 예외를 넣어줘야 한다
         } finally {
             close(con, pstmt, null); // 항상 호출을 보장해야 한다
         }
     }
 
-    public void delete(String memberId) throws SQLException {
+    @Override
+    public void delete(String memberId) {
         String sql = "delete from member where member_id =?";
         log.info("delete");
 
@@ -117,8 +119,7 @@ public class MemberRepositoryV3 {
             int resultSize = pstmt.executeUpdate();
             log.info("resultSize={}", resultSize);
         } catch (SQLException e) {
-            log.error("db error", e);
-            throw e;
+            throw new MyDbException(e); // 예외를 갈아탈 때는 반드시 기존 예외를 넣어줘야 한다
         } finally {
             close(con, pstmt, null); // 항상 호출을 보장해야 한다
         }
