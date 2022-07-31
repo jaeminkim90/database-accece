@@ -9,6 +9,7 @@ import java.util.NoSuchElementException;
 
 import javax.sql.DataSource;
 
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.jdbc.support.JdbcUtils;
 import org.springframework.jdbc.support.SQLErrorCodeSQLExceptionTranslator;
@@ -27,7 +28,6 @@ public class MemberRepositoryV4_2 implements MemberRepository {
     private final DataSource dataSource;
     private final SQLExceptionTranslator exTranslator;
 
-
     public MemberRepositoryV4_2(DataSource dataSource) {
         this.dataSource = dataSource;
         this.exTranslator = new SQLErrorCodeSQLExceptionTranslator(dataSource); // 에러코드를 찾아서 예외를 전환해주는 구현체 사용
@@ -37,7 +37,6 @@ public class MemberRepositoryV4_2 implements MemberRepository {
     public Member save(Member member) { // throws SQLException 는 생략해도 된다(unchecked 예외 사용)
 
         String sql = "insert into member(member_id, money) values (?,?)"; // 쿼리
-
         Connection con = null;
         PreparedStatement pstmt = null;
 
@@ -48,9 +47,8 @@ public class MemberRepositoryV4_2 implements MemberRepository {
             pstmt.setInt(2, member.getMoney());
             pstmt.executeUpdate(); // 실행
             return member;
-
         } catch (SQLException e) {
-
+            throw exTranslator.translate("save", sql, e);
         } finally {
             close(con, pstmt, null); // 항상 호출을 보장해야 한다
         }
@@ -81,7 +79,7 @@ public class MemberRepositoryV4_2 implements MemberRepository {
                     "member not found memberId=" + memberId); // memberId를 예외 메시지에 넣지 않으면 어떤 memberId가 문제인지 알 수 없다
             }
         } catch (SQLException e) {
-            throw new MyDbException(e); // 예외를 갈아탈 때는 반드시 기존 예외를 넣어줘야 한다
+            throw exTranslator.translate("findById", sql, e);
         } finally {
             close(con, pstmt, rs); // close 처리는 중요하다
         }
@@ -102,7 +100,7 @@ public class MemberRepositoryV4_2 implements MemberRepository {
             int resultSize = pstmt.executeUpdate();
             log.info("resultSize={}", resultSize);
         } catch (SQLException e) {
-            throw new MyDbException(e); // 예외를 갈아탈 때는 반드시 기존 예외를 넣어줘야 한다
+            throw exTranslator.translate("update ", sql, e);
         } finally {
             close(con, pstmt, null); // 항상 호출을 보장해야 한다
         }
@@ -123,7 +121,7 @@ public class MemberRepositoryV4_2 implements MemberRepository {
             int resultSize = pstmt.executeUpdate();
             log.info("resultSize={}", resultSize);
         } catch (SQLException e) {
-            throw new MyDbException(e); // 예외를 갈아탈 때는 반드시 기존 예외를 넣어줘야 한다
+            throw exTranslator.translate("delete", sql, e);
         } finally {
             close(con, pstmt, null); // 항상 호출을 보장해야 한다
         }
