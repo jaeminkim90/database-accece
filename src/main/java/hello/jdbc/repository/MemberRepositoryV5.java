@@ -24,7 +24,7 @@ public class MemberRepositoryV5 implements MemberRepository {
     public Member save(Member member) { // throws SQLException 는 생략해도 된다(unchecked 예외 사용)
 
 
-        String sql = "insert into member(member_id, money) values (?,?) 잘못된 쿼리를 넣은 상황이다!"; // 쿼리
+        String sql = "insert into member(member_id, money) values (?,?)"; // 쿼리
 
         // save 할 때는 update()를 사용한다
         template.update(sql, member.getMemberId(), member.getMoney()); // 갱신 또는 생성된 row의 숫자를 반환한다
