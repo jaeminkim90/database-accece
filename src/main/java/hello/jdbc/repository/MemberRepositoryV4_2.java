@@ -36,7 +36,7 @@ public class MemberRepositoryV4_2 implements MemberRepository {
     @Override // 인터페이스 사용 시 overide를 넣는 것이 좋다
     public Member save(Member member) { // throws SQLException 는 생략해도 된다(unchecked 예외 사용)
 
-        String sql = "insert into member(member_id, money) values (?,?)"; // 쿼리
+        String sql = "insert into member(member_id, money) values (?,?) 잘못된 쿼리를 넣은 상황이다!"; // 쿼리
         Connection con = null;
         PreparedStatement pstmt = null;
 
